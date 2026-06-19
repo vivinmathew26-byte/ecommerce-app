@@ -77,30 +77,33 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-            steps {
-                echo '☸️ Deploying to Kubernetes...'
-                sh """
-                    # Update image in k8s manifests
-                    sed -i "s|yourdockerhub/ecommerce-backend:.*|${BACKEND_IMAGE}:${IMAGE_TAG}|g" k8s/base/backend.yaml
-                    sed -i "s|yourdockerhub/ecommerce-frontend:.*|${FRONTEND_IMAGE}:${IMAGE_TAG}|g" k8s/base/frontend.yaml
+    steps {
+        echo '☸️ Deploying to Kubernetes...'
+        sh '''
+            export PATH=$PATH:/usr/local/bin
 
-                    # Apply manifests
-                    kubectl apply -f k8s/base/namespace.yaml
-                    kubectl apply -f k8s/base/configmap.yaml
-                    kubectl apply -f k8s/base/secrets.yaml
-                    kubectl apply -f k8s/base/postgres.yaml
-                    kubectl apply -f k8s/base/backend.yaml
-                    kubectl apply -f k8s/base/frontend.yaml
-                    kubectl apply -f k8s/base/ingress.yaml
+            sed -i "s|yourdockerhub/ecommerce-backend:.*|vivinsdevops/ecommerce-backend:${IMAGE_TAG}|g" k8s/base/backend.yaml
+            sed -i "s|yourdockerhub/ecommerce-frontend:.*|vivinsdevops/ecommerce-frontend:${IMAGE_TAG}|g" k8s/base/frontend.yaml
 
-                    # Wait for rollout
-                    kubectl rollout status deployment/backend -n ecommerce --timeout=120s
-                    kubectl rollout status deployment/frontend -n ecommerce --timeout=120s
+            kubectl apply -f k8s/base/namespace.yaml
+            kubectl apply -f k8s/base/configmap.yaml
+            kubectl apply -f k8s/base/secrets.yaml
+            kubectl apply -f k8s/base/postgres.yaml
 
-                    kubectl get pods -n ecommerce
-                """
-            }
-        }
+            echo "⏳ Waiting for postgres..."
+            kubectl wait --for=condition=ready pod -l app=postgres -n ecommerce --timeout=120s
+
+            kubectl apply -f k8s/base/backend.yaml
+            kubectl apply -f k8s/base/frontend.yaml
+            kubectl apply -f k8s/base/ingress.yaml
+
+            kubectl rollout status deployment/backend -n ecommerce --timeout=300s
+            kubectl rollout status deployment/frontend -n ecommerce --timeout=300s
+
+            kubectl get pods -n ecommerce
+        '''
+    }
+}
 
         stage('Health Check') {
             steps {
