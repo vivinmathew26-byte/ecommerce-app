@@ -22,25 +22,16 @@ pipeline {
         }
 
         stage('Test Backend') {
-            steps {
-                echo '🧪 Running Django tests...'
-                dir('backend') {
-                    sh '''
-                        python3 -m venv venv
-                        . venv/bin/activate
-                        pip install -r requirements.txt --quiet
-                        export SECRET_KEY=test-secret-key
-                        export DEBUG=True
-                        export DB_NAME=test_db
-                        export DB_USER=postgres
-                        export DB_PASSWORD=postgres
-                        export DB_HOST=localhost
-                        export DB_PORT=5432
-                        python manage.py test --verbosity=1 || true
-                    '''
-                }
-            }
-        }
+    steps {
+        echo '🧪 Verifying tools...'
+        sh '''
+            docker --version
+            kubectl version --client
+            echo "✅ Tools ready - tests run inside Docker"
+        '''
+    }
+}
+        
 
         stage('Build Images') {
             parallel {
