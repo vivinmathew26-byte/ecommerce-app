@@ -3,10 +3,9 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        GITHUB_CREDENTIALS    = credentials('github_vivinmathew26-byte_credentials')
         DOCKERHUB_USER        = "vivinsdevops"
-        BACKEND_IMAGE         = "${DOCKERHUB_USER}/ecommerce-backend"
-        FRONTEND_IMAGE        = "${DOCKERHUB_USER}/ecommerce-frontend"
+        BACKEND_IMAGE         = "vivinsdevops/ecommerce-backend"
+        FRONTEND_IMAGE        = "vivinsdevops/ecommerce-frontend"
         IMAGE_TAG             = "${BUILD_NUMBER}"
     }
 
@@ -15,25 +14,24 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '📥 Pulling code from GitHub...'
-                git credentialsId: 'github_vivinmathew26-byte_credentials',
+                git credentialsId: 'github-credentials',
                     url: 'https://github.com/vivinmathew26-byte/Ecommerce-app',
                     branch: 'main'
             }
         }
 
         stage('Test Backend') {
-    steps {
-        echo '🧪 Verifying tools...'
-        sh '''
-    export PATH=$PATH:/usr/local/bin
-    export KUBECONFIG=/var/lib/jenkins/.kube/config
-    docker --version
-    kubectl get nodes
-    echo "✅ Tools ready!"
-'''
-    }
-}
-        
+            steps {
+                echo '🧪 Verifying tools...'
+                sh '''
+                    export PATH=$PATH:/usr/local/bin
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+                    docker --version
+                    kubectl get nodes
+                    echo "✅ Tools ready!"
+                '''
+            }
+        }
 
         stage('Build Images') {
             parallel {
@@ -78,43 +76,44 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
-    steps {
-        echo '☸️ Deploying to Kubernetes...'
-        sh '''
-            export PATH=$PATH:/usr/local/bin
-            export KUBECONFIG=/var/lib/jenkins/.kube/config
+            steps {
+                echo '☸️ Deploying to Kubernetes...'
+                sh '''
+                    export PATH=$PATH:/usr/local/bin
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
 
-            sed -i "s|yourdockerhub/ecommerce-backend:.*|vivinsdevops/ecommerce-backend:${IMAGE_TAG}|g" k8s/base/backend.yaml
-            sed -i "s|yourdockerhub/ecommerce-frontend:.*|vivinsdevops/ecommerce-frontend:${IMAGE_TAG}|g" k8s/base/frontend.yaml
+                    sed -i "s|yourdockerhub/ecommerce-backend:.*|vivinsdevops/ecommerce-backend:${BUILD_NUMBER}|g" k8s/base/backend.yaml
+                    sed -i "s|yourdockerhub/ecommerce-frontend:.*|vivinsdevops/ecommerce-frontend:${BUILD_NUMBER}|g" k8s/base/frontend.yaml
 
-            kubectl apply -f k8s/base/namespace.yaml
-            kubectl apply -f k8s/base/configmap.yaml
-            kubectl apply -f k8s/base/secrets.yaml
-            kubectl apply -f k8s/base/postgres.yaml
+                    kubectl apply -f k8s/base/namespace.yaml
+                    kubectl apply -f k8s/base/configmap.yaml
+                    kubectl apply -f k8s/base/secrets.yaml
+                    kubectl apply -f k8s/base/postgres.yaml
 
-            echo "⏳ Waiting for postgres..."
-            kubectl wait --for=condition=ready pod -l app=postgres -n ecommerce --timeout=120s
+                    echo "⏳ Waiting for postgres..."
+                    kubectl wait --for=condition=ready pod -l app=postgres -n ecommerce --timeout=120s
 
-            kubectl apply -f k8s/base/backend.yaml
-            kubectl apply -f k8s/base/frontend.yaml
-            kubectl apply -f k8s/base/ingress.yaml
+                    kubectl apply -f k8s/base/backend.yaml
+                    kubectl apply -f k8s/base/frontend.yaml
+                    kubectl apply -f k8s/base/ingress.yaml
 
-            kubectl rollout status deployment/backend -n ecommerce --timeout=300s
-            kubectl rollout status deployment/frontend -n ecommerce --timeout=300s
+                    kubectl rollout status deployment/backend -n ecommerce --timeout=300s
+                    kubectl rollout status deployment/frontend -n ecommerce --timeout=300s
 
-            kubectl get pods -n ecommerce
-        '''
-    }
-}
+                    kubectl get pods -n ecommerce
+                '''
+            }
+        }
 
         stage('Health Check') {
             steps {
                 echo '🏥 Health check...'
-                sh """
+                sh '''
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
                     sleep 15
                     kubectl get pods -n ecommerce
-                    echo '✅ Deployment complete!'
-                """
+                    echo "✅ Deployment complete!"
+                '''
             }
         }
     }
@@ -127,10 +126,10 @@ pipeline {
             echo "❌ Build #${BUILD_NUMBER} failed!"
         }
         always {
-            sh """
-                docker rmi ${BACKEND_IMAGE}:${IMAGE_TAG} || true
-                docker rmi ${FRONTEND_IMAGE}:${IMAGE_TAG} || true
-            """
+            sh '''
+                docker rmi vivinsdevops/ecommerce-backend:${BUILD_NUMBER} || true
+                docker rmi vivinsdevops/ecommerce-frontend:${BUILD_NUMBER} || true
+            '''
         }
     }
 }
