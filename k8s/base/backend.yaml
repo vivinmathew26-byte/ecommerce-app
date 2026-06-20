@@ -53,14 +53,16 @@ spec:
             httpGet:
               path: /api/products/
               port: 8000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 10
+            failureThreshold: 10
           livenessProbe:
             httpGet:
               path: /api/products/
               port: 8000
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 30
+            failureThreshold: 5
           volumeMounts:
             - name: media-storage
               mountPath: /app/media
@@ -68,7 +70,6 @@ spec:
         - name: media-storage
           persistentVolumeClaim:
             claimName: media-pvc
-
 ---
 # ─────────────────────────────────────────
 # Media PVC
@@ -84,7 +85,6 @@ spec:
   resources:
     requests:
       storage: 2Gi
-
 ---
 # ─────────────────────────────────────────
 # Backend Service
@@ -101,7 +101,6 @@ spec:
     - port: 8000
       targetPort: 8000
   type: ClusterIP
-
 ---
 # ─────────────────────────────────────────
 # Backend HorizontalPodAutoscaler
