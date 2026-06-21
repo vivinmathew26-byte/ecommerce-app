@@ -21,6 +21,12 @@ const ProductDetail = () => {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const getImageSrc = (image) => {
+    if (!image) return 'https://via.placeholder.com/500x400?text=No+Image';
+    if (image.startsWith('http')) return image;
+    return `http://localhost:8000${image}`;
+  };
+
   const handleAddToCart = async () => {
     if (!user) { toast.error('Please login first'); return; }
     try {
@@ -48,7 +54,7 @@ const ProductDetail = () => {
       <div className="detail-grid">
         <div className="detail-image">
           <img
-            src={product.image || 'https://via.placeholder.com/500x400?text=No+Image'}
+            src={getImageSrc(product.image)}
             alt={product.name}
           />
         </div>
