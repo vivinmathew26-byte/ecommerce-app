@@ -18,6 +18,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     seller_name = serializers.CharField(source='seller.username', read_only=True)
     avg_rating = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -29,3 +30,11 @@ class ProductSerializer(serializers.ModelSerializer):
         if reviews:
             return round(sum(r.rating for r in reviews) / len(reviews), 1)
         return 0
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        image_str = str(obj.image)
+        if image_str.startswith('http'):
+            return image_str
+        return obj.image.url
