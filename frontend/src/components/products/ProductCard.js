@@ -20,6 +20,12 @@ const ProductCard = ({ product }) => {
     }
   };
 
+  const getImageSrc = (image) => {
+    if (!image) return 'https://via.placeholder.com/300x200?text=No+Image';
+    if (image.startsWith('http')) return image;
+    return `http://localhost:8000${image}`;
+  };
+
   const stars = '★'.repeat(Math.round(product.avg_rating || 0)) +
                 '☆'.repeat(5 - Math.round(product.avg_rating || 0));
 
@@ -27,7 +33,7 @@ const ProductCard = ({ product }) => {
     <Link to={`/products/${product.id}`} className="product-card">
       <div className="product-img-wrap">
         <img
-          src={product.image || 'https://via.placeholder.com/300x200?text=No+Image'}
+          src={getImageSrc(product.image)}
           alt={product.name}
         />
         {product.stock === 0 && <span className="out-of-stock">Out of Stock</span>}
