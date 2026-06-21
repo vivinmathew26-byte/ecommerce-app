@@ -39,7 +39,7 @@ pipeline {
                     steps {
                         echo '🐳 Building backend image...'
                         sh """
-                            docker build \
+                            docker build --no-cache \
                                 -t ${BACKEND_IMAGE}:${IMAGE_TAG} \
                                 -t ${BACKEND_IMAGE}:latest \
                                 ./backend
@@ -50,7 +50,7 @@ pipeline {
                     steps {
                         echo '🐳 Building frontend image...'
                         sh """
-                            docker build \
+                            docker build --no-cache \
                                 -t ${FRONTEND_IMAGE}:${IMAGE_TAG} \
                                 -t ${FRONTEND_IMAGE}:latest \
                                 ./frontend
