@@ -18,7 +18,7 @@ API.interceptors.response.use(
       original._retry = true;
       try {
         const refresh = localStorage.getItem('refresh_token');
-        const base = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+        const base = process.env.REACT_APP_API_URL || 'http://100.58.184.250:8000/api';
         const { data } = await axios.post(`${base}/users/token/refresh/`, { refresh });
         localStorage.setItem('access_token', data.access);
         original.headers.Authorization = `Bearer ${data.access}`;
